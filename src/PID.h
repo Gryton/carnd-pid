@@ -3,13 +3,14 @@
 
 class PID {
 public:
+  bool initialized;
   /*
   * Errors
   */
   double p_error;
   double i_error;
   double d_error;
-
+  double total_cte;
   /*
   * Coefficients
   */ 
