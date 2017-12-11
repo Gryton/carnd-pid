@@ -1,98 +1,38 @@
 # CarND-Controls-PID
 Self-Driving Car Engineer Nanodegree Program
 
+This project is implementation of PID controller, that controls steering of the car around Udacity track simulation. Purpose is to have a car, that will drive the whole track without getting off the road
+or popping up onto ledges.
+
 ---
 
-## Dependencies
+## Rubric points reflection
 
-* cmake >= 3.5
- * All OSes: [click here for installation instructions](https://cmake.org/install/)
-* make >= 4.1(mac, linux), 3.81(Windows)
-  * Linux: make is installed by default on most Linux distros
-  * Mac: [install Xcode command line tools to get make](https://developer.apple.com/xcode/features/)
-  * Windows: [Click here for installation instructions](http://gnuwin32.sourceforge.net/packages/make.htm)
-* gcc/g++ >= 5.4
-  * Linux: gcc / g++ is installed by default on most Linux distros
-  * Mac: same deal as make - [install Xcode command line tools]((https://developer.apple.com/xcode/features/)
-  * Windows: recommend using [MinGW](http://www.mingw.org/)
-* [uWebSockets](https://github.com/uWebSockets/uWebSockets)
-  * Run either `./install-mac.sh` or `./install-ubuntu.sh`.
-  * If you install from source, checkout to commit `e94b6e1`, i.e.
-    ```
-    git clone https://github.com/uWebSockets/uWebSockets 
-    cd uWebSockets
-    git checkout e94b6e1
-    ```
-    Some function signatures have changed in v0.14.x. See [this PR](https://github.com/udacity/CarND-MPC-Project/pull/3) for more details.
-* Simulator. You can download these from the [project intro page](https://github.com/udacity/self-driving-car-sim/releases) in the classroom.
+# 1. Describe the effect each of the P, I, D components had in your implementation.
 
-There's an experimental patch for windows in this [PR](https://github.com/udacity/CarND-PID-Control-Project/pull/3)
+Proportional, P, component has very basic influence on the car steering - if car error raises a little it will correct steering a little, if it's bigger raise the correction is bigger. 
+As it was expected, increasing *P* coefficient leads to bigger oscillations of the car. It's good for starting point, but the car behaves very nervous, and driving is very sharp. Also the car had tendency
+to getting off the track, as it sometimes counter-steered with maximal value, what lead to over-steering so oscillations were getting bigger.
+I started with coefficient 1 for P, but as long as I had progression on *D* and I coefficients leading to more smooth driving I was reducing the value for P. I even tried to get rid of proportional part
+to see how it goes, but performance of algorithm without proportional part is also not so good - the car reacts too slow for changes, and cannot make fast and small corrections.
 
-## Basic Build Instructions
+Differential component, D, made a ride much more smooth. Using just *P* and *D* I was able to drive the whole track. I found that nature of *D* is sometimes very close to *P* - when it's used with too big 
+coefficient (even though *P* is small) it also leads to oscillations and can increase them, what wasn't expected by me. For sure differential part is what can really help when CTE is quite big. As proportional
+part 'panics' and makes very strong correction when error is big, differential part can just correct new errors, and prevent too big corrections.
 
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./pid`. 
+Integral component, *I*, was the biggest game changer for me. It was the part that made the car driving really smoothly, and a lot closer to human driving. Increasing it too much, while keeping other
+components low also leads to oscillations - and what is understandable, each one is bigger, as sum of error increases rapidly, while reaction is delayed, what leads to too big and too long reaction.
+This component can really turn - if you think about that, it's designed for turning - when car goes off middle of the track because of the turn the differential is rather constant, proportional component
+could help here, but I want to keep it not too big as it will create oscillations, so there comes integral. In a turn when car is going straight sum of error grows rapidly, so it will correct steering
+slightly, until it will zero after driving stably in the middle, or driving to the inside of a turn in case of sharper corners. When increasing integral coefficient I could reduce *P* and still have good
+corrections, without oscillations. Main difference is that using more integral than proportional the reaction is delayed, but smoother.
 
-Tips for setting up your environment can be found [here](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/23d376c7-0195-4276-bdf0-e02f1f3c665d)
+# 2. Describe how the final hyperparameters were chosen.
 
-## Editor Settings
-
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
-
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
-
-## Code Style
-
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
-
-## Project Instructions and Rubric
-
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
-
-More information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/f1820894-8322-4bb3-81aa-b26b3c6dcbaf/lessons/e8235395-22dd-4b87-88e0-d108c5e5bbf4/concepts/6a4d8d42-6a04-4aa6-b284-1697c0fd6562)
-for instructions and the project rubric.
-
-## Hints!
-
-* You don't have to follow this directory structure, but if you do, your work
-  will span all of the .cpp files here. Keep an eye out for TODOs.
-
-## Call for IDE Profiles Pull Requests
-
-Help your fellow students!
-
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to we ensure
-that students don't feel pressured to use one IDE or another.
-
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
-
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
-
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
-
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
-
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
-
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
-
+I've started tuning manually with mainly *PD* controller with coefficient *I* very close to 0. I've played around a bit, as long as I saw that increasing *D* helps with reducing oscillations, and then added very
+small *I* coefficient. I reduced both *P* and *D*, and when I got oscillations I've increased *D* to prevent them. I was trying to minimize total error calculated as sum of absolute values of errors got
+during the whole track, and watched how the car goes through the track. I realized, that what I liked not necessarily was seen in total error. Sometimes error increased, but thought that the car was
+driving better, and I had much less motion sickness. So I thought that it will be quite nice to go this way, without twiddling around total error. My last result has much worse total error, and it's
+visible that it sometimes goes closer to lane lines, but I think it drives more natural and I like it better this way.
+I think that creating good PID for self-driving car should also contain minimizing integral of steering angle differences, so the ride will be accurate in terms of CTE and smooth, without sharp
+left to right transitions, just like a human does.
